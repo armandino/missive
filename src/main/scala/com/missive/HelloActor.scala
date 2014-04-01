@@ -1,3 +1,5 @@
+package com.missive
+
 import akka.actor.Actor
 import akka.actor.ActorSystem
 import akka.actor.Props
