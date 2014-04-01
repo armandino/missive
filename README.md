@@ -1,2 +1,4 @@
 missive
 =======
+
+$ sbt run
