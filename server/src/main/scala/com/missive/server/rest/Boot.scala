@@ -1,4 +1,4 @@
-package com.missive.server
+package com.missive.server.rest
 
 import akka.actor.{Props, ActorSystem}
 import spray.servlet.WebBoot
@@ -8,7 +8,6 @@ import spray.servlet.WebBoot
 // the spray.servlet.WebBoot trait
 class Boot extends WebBoot {
 
-  // we need an ActorSystem to host our application in
   val system = ActorSystem("missiveActorSystem")
 
   // the service actor replies to incoming HttpRequests
