@@ -2,6 +2,8 @@
 To launch the server:
 
 sbt
+> eclipse
+> gen-idea
 > test
 > ~container:start
 
