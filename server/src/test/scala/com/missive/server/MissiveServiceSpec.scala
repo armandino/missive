@@ -4,28 +4,24 @@ import org.specs2.mutable.Specification
 import spray.testkit.Specs2RouteTest
 import spray.http._
 import StatusCodes._
+import com.missive.server.domain.Message
+import spray.httpx.SprayJsonSupport._
 
-class MyServiceSpec extends Specification with Specs2RouteTest with MissiveService {
+class MissiveServiceSpec extends Specification with Specs2RouteTest with MissiveRESTService with MissiveJsonProtocol {
   def actorRefFactory = system
   
-  "MyService" should {
+  "MissiveService" should {
 
-    "return a greeting for GET requests to the root path" in {
-      Get() ~> myRoute ~> check {
-        responseAs[String] must contain("Say hello")
-      }
-    }
-
-    "leave GET requests to other paths unhandled" in {
-      Get("/kermit") ~> myRoute ~> check {
-        handled must beFalse
+    "fetch all messages" in {
+      Get("/allmessages") ~> route ~> check {
+        responseAs[List[Message]].size == 3
       }
     }
 
     "return a MethodNotAllowed error for PUT requests to the root path" in {
-      Put() ~> sealRoute(myRoute) ~> check {
+      Put() ~> sealRoute(route) ~> check {
         status === MethodNotAllowed
-        responseAs[String] === "HTTP method not allowed, supported methods: GET"
+        responseAs[String] must contain ("HTTP method not allowed")
       }
     }
   }
