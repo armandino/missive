@@ -1,4 +1,4 @@
-package com.missive.server
+package com.missive.server.rest
 
 import org.specs2.mutable.Specification
 import spray.testkit.Specs2RouteTest
@@ -8,7 +8,6 @@ import com.missive.server.domain.Message
 import spray.httpx.SprayJsonSupport._
 import com.missive.server.domain.Location
 import spray.json._
-import com.missive.server.rest.MissiveServiceRest
 
 class MissiveServiceSpec extends Specification with Specs2RouteTest with MissiveServiceRest {
   def actorRefFactory = system
