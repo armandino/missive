@@ -8,40 +8,31 @@ import com.missive.server.domain.Message
 import spray.httpx.SprayJsonSupport._
 import com.missive.server.domain.Location
 import spray.json._
+import com.missive.server.service.MissiveService
 
-class MissiveServiceSpec extends Specification with Specs2RouteTest with MissiveServiceRest {
-  def actorRefFactory = system
+class MissiveServiceSpec extends Specification with MissiveService {
   
   "MissiveService" should {
 
     "fetch all messages" in {
-      Get("/messages") ~> route ~> check {
-        responseAs[List[Message]].size === 3
-      }
+      getAllMessage must not be empty 
     }
 
     "fetch single messages" in {
-      Get("/messages?id=" + messages(0).id) ~> route ~> check {
-        responseAs[Message].id === messages(0).id
-      }
+      val id = messages(0).id
+      getMessage(id) must not be (None)
     }
 
     "fetch no messages" in {
-      Get("/messages?id=111") ~> route ~> check {
-        status === StatusCodes.NotFound
-      }
+      getMessage("0") must be (None)
     }
-
     
     "add new messages" in {
       val id = uuid
-      val json = Message(id, "user1", "hello world", Location("-123.456", "49.551"), "1 min ago")
-      Post("/messages", json) ~> route ~> check {
-        status === StatusCodes.NoContent
-      }
-      Get("/messages?id=" + id) ~> route ~> check {
-        responseAs[Message].id === id
-      }
+      val msg = messages(0).copy(id=id)
+      addMessage(msg)
+      getMessage(id) must not be (None)
+      getAllMessage must have size(4)
     }
 
   }
