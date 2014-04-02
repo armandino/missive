@@ -7,11 +7,7 @@ version := "1.0"
 scalaVersion := "2.10.4"
 
 
-
 seq(webSettings: _*)
-
-Revolver.settings
-
 
 
 libraryDependencies += "io.spray" % "spray-servlet" % "1.3.1" 
@@ -20,14 +16,19 @@ libraryDependencies += "io.spray" % "spray-routing" % "1.3.1"
 
 libraryDependencies += "io.spray" %%  "spray-json" % "1.2.5"
 
+libraryDependencies += "com.typesafe.akka" %% "akka-actor" % "2.3.1"
+
+libraryDependencies += "com.typesafe.akka" %% "akka-slf4j" % "2.3.1" 
+
 libraryDependencies += "org.eclipse.jetty" % "jetty-webapp" % "9.1.0.v20131115" % "container"
 
 libraryDependencies += "org.eclipse.jetty" % "jetty-plus" % "9.1.0.v20131115" % "container"
-
-libraryDependencies += "com.typesafe.akka" %% "akka-actor" % "2.3.1"
             
 libraryDependencies += "javax.servlet" % "javax.servlet-api" % "3.0.1" % "container"
 
+libraryDependencies += "org.clapper" %% "grizzled-slf4j" % "1.0.1"
+                       
+libraryDependencies += "ch.qos.logback" % "logback-classic" % "1.0.13" % "runtime"
 
 
 
