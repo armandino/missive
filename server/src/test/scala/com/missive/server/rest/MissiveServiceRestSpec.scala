@@ -8,7 +8,10 @@ import com.missive.server.domain.Message
 import spray.httpx.SprayJsonSupport._
 import com.missive.server.domain.Location
 import spray.json._
+import org.junit.runner.RunWith
+import org.specs2.runner.JUnitRunner
 
+@RunWith(classOf[JUnitRunner])
 class MissiveServiceRestSpec extends Specification with Specs2RouteTest with MissiveServiceRest {
   def actorRefFactory = system
   
