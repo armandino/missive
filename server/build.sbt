@@ -38,3 +38,4 @@ libraryDependencies += "io.spray" % "spray-testkit" % "1.3.1" % "test"
 
 libraryDependencies += "org.specs2" %% "specs2" % "2.2.3" % "test"
 
+libraryDependencies += "junit" % "junit" % "4.8.1" % "test"

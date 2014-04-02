@@ -1,15 +1,11 @@
 package com.missive.server.rest
 
+import org.junit.runner.RunWith
 import org.specs2.mutable.Specification
-import spray.testkit.Specs2RouteTest
-import spray.http._
-import StatusCodes._
-import com.missive.server.domain.Message
-import spray.httpx.SprayJsonSupport._
-import com.missive.server.domain.Location
-import spray.json._
 import com.missive.server.service.MissiveService
+import org.specs2.runner.JUnitRunner
 
+@RunWith(classOf[JUnitRunner])
 class MissiveServiceSpec extends Specification with MissiveService {
   
   "MissiveService" should {
