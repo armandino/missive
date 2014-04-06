@@ -2,7 +2,6 @@
 <resources>
 
     <string name="app_name">missive</string>
-    <string name="hello_world">Hello world!</string>
-    <string name="menu_settings">Settings</string>
+    <string name="map_activity_label">Missive</string>
 
 </resources>
