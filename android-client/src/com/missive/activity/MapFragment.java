@@ -24,6 +24,8 @@ import org.slf4j.LoggerFactory;
 import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.location.Location;
+import android.location.LocationManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -36,8 +38,7 @@ import android.widget.Toast;
 import com.missive.model.MissiveMessage;
 import com.missive.service.MissiveServerFacade;
 
-public class MapFragment extends Fragment {
-    @SuppressWarnings("unused")
+public class MapFragment extends Fragment implements LocationChangeHandler {
     private static final Logger log = LoggerFactory.getLogger(MapFragment.class);
 
     private static final String PREFS_NAME = "org.andnav.osm.prefs";
@@ -53,6 +54,7 @@ public class MapFragment extends Fragment {
     private MinimapOverlay mMinimapOverlay;
     private ScaleBarOverlay mScaleBarOverlay;
     private ResourceProxy mResourceProxy;
+    private UserLocationListener mUserLocationListener;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -110,9 +112,19 @@ public class MapFragment extends Fragment {
         mCompassOverlay.enableCompass();
         mMyLocationOverlay.enableMyLocation();
 
+        mUserLocationListener = new UserLocationListener(this);
+        mUserLocationListener.registerForUpdates(LocationManager.GPS_PROVIDER);
+
+        // TODO: set to current location based on the location reading
         mMapView.getController().setCenter(new GeoPoint(49.276318, -123.134154));
 
         setHasOptionsMenu(false); // Hide OSM menu
+    }
+
+    @Override
+    public void userLocationChanged(final Location newLocation) {
+        log.warn("User location changed: " + newLocation);
+        // TODO handle new location
     }
 
     private List<OverlayItem> createMissiveMessagesOverlay() {
@@ -132,18 +144,17 @@ public class MapFragment extends Fragment {
                 new ItemizedIconOverlay.OnItemGestureListener<OverlayItem>() {
                     @Override
                     public boolean onItemSingleTapUp(final int index, final OverlayItem item) {
-                        showMessage(item);
-                        return true;
+                        return showMessage(item);
                     }
 
                     @Override
                     public boolean onItemLongPress(final int index, final OverlayItem item) {
-                        showMessage(item);
-                        return true;
+                        return showMessage(item);
                     }
 
-                    private void showMessage(OverlayItem item) {
+                    private boolean showMessage(OverlayItem item) {
                         Toast.makeText(MapFragment.this.getActivity(), item.getSnippet(), Toast.LENGTH_LONG).show();
+                        return true;
                     }
 
                 }, mResourceProxy);

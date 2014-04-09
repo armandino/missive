@@ -34,6 +34,7 @@
         android:required="false" />
 
     <application
+        android:name="com.missive.app.context.MissiveApp"
         android:allowBackup="true"
         android:hardwareAccelerated="true"
         android:icon="@drawable/icon"
