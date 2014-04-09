@@ -1,10 +1,18 @@
 package com.missive.activity;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.osmdroid.ResourceProxy;
+import org.osmdroid.api.IMapController;
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
 import org.osmdroid.tileprovider.util.CloudmadeUtil;
+import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.MapView;
+import org.osmdroid.views.overlay.ItemizedIconOverlay;
 import org.osmdroid.views.overlay.MinimapOverlay;
+import org.osmdroid.views.overlay.Overlay;
+import org.osmdroid.views.overlay.OverlayItem;
 import org.osmdroid.views.overlay.ScaleBarOverlay;
 import org.osmdroid.views.overlay.compass.CompassOverlay;
 import org.osmdroid.views.overlay.compass.InternalCompassOrientationProvider;
@@ -23,26 +31,32 @@ import android.util.DisplayMetrics;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Toast;
+
+import com.missive.model.MissiveMessage;
+import com.missive.service.MissiveServerFacade;
 
 public class MapFragment extends Fragment {
+    @SuppressWarnings("unused")
     private static final Logger log = LoggerFactory.getLogger(MapFragment.class);
 
     private static final String PREFS_NAME = "org.andnav.osm.prefs";
     private static final String PREFS_TILE_SOURCE = "tilesource";
     private static final String PREFS_SCROLL_X = "scrollX";
     private static final String PREFS_SCROLL_Y = "scrollY";
-    private static final String PREFS_ZOOM_LEVEL = "zoomLevel";
+    private static final int DEFAULT_ZOOM = 12;
 
     private SharedPreferences mPrefs;
     private MapView mMapView;
-    private MyLocationNewOverlay mLocationOverlay;
+    private MyLocationNewOverlay mMyLocationOverlay;
     private CompassOverlay mCompassOverlay;
     private MinimapOverlay mMinimapOverlay;
     private ScaleBarOverlay mScaleBarOverlay;
+    private ResourceProxy mResourceProxy;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        ResourceProxy mResourceProxy = new ResourceProxyImpl(inflater.getContext().getApplicationContext());
+        mResourceProxy = new ResourceProxyImpl(inflater.getContext().getApplicationContext());
         mMapView = new MapView(inflater.getContext(), 256, mResourceProxy);
         mMapView.setUseSafeCanvas(true);
         // Call this method to turn off hardware acceleration at the View level.
@@ -72,7 +86,7 @@ public class MapFragment extends Fragment {
         }
 
         mCompassOverlay = new CompassOverlay(context, new InternalCompassOrientationProvider(context), mMapView);
-        mLocationOverlay = new MyLocationNewOverlay(context, new GpsMyLocationProvider(context), mMapView);
+        mMyLocationOverlay = new MyLocationNewOverlay(context, new GpsMyLocationProvider(context), mMapView);
 
         mMinimapOverlay = new MinimapOverlay(getActivity(), mMapView.getTileRequestCompleteHandler());
         mMinimapOverlay.setWidth(dm.widthPixels / 5);
@@ -84,18 +98,57 @@ public class MapFragment extends Fragment {
 
         mMapView.setBuiltInZoomControls(true);
         mMapView.setMultiTouchControls(true);
-        mMapView.getOverlays().add(mLocationOverlay);
+        mMapView.getOverlays().add(mMyLocationOverlay);
         mMapView.getOverlays().add(mCompassOverlay);
         mMapView.getOverlays().add(mMinimapOverlay);
         mMapView.getOverlays().add(mScaleBarOverlay);
+        mMapView.getOverlays().add(getMissiveOverlay());
 
-        mMapView.getController().setZoom(mPrefs.getInt(PREFS_ZOOM_LEVEL, 1));
-        mMapView.scrollTo(mPrefs.getInt(PREFS_SCROLL_X, 0), mPrefs.getInt(PREFS_SCROLL_Y, 0));
+        final IMapController mapController = mMapView.getController();
+        mapController.setZoom(DEFAULT_ZOOM);
 
-        mLocationOverlay.enableMyLocation();
         mCompassOverlay.enableCompass();
+        mMyLocationOverlay.enableMyLocation();
+
+        mMapView.getController().setCenter(new GeoPoint(49.276318, -123.134154));
 
         setHasOptionsMenu(false); // Hide OSM menu
+    }
+
+    private List<OverlayItem> createMissiveMessagesOverlay() {
+        final MissiveServerFacade serverFacade = new MissiveServerFacade();
+        final List<MissiveMessage> messages = serverFacade.getMessages();
+        final List<OverlayItem> items = new ArrayList<OverlayItem>();
+
+        for (MissiveMessage message : messages) {
+            GeoPoint geoPoint = new GeoPoint(message.getLocation().getLat(), message.getLocation().getLon());
+            items.add(new OverlayItem(message.getUserId(), message.toString(), geoPoint));
+        }
+        return items;
+    }
+
+    private Overlay getMissiveOverlay() {
+        final Overlay overlay = new ItemizedIconOverlay<OverlayItem>(createMissiveMessagesOverlay(),
+                new ItemizedIconOverlay.OnItemGestureListener<OverlayItem>() {
+                    @Override
+                    public boolean onItemSingleTapUp(final int index, final OverlayItem item) {
+                        showMessage(item);
+                        return true;
+                    }
+
+                    @Override
+                    public boolean onItemLongPress(final int index, final OverlayItem item) {
+                        showMessage(item);
+                        return true;
+                    }
+
+                    private void showMessage(OverlayItem item) {
+                        Toast.makeText(MapFragment.this.getActivity(), item.getSnippet(), Toast.LENGTH_LONG).show();
+                    }
+
+                }, mResourceProxy);
+
+        return overlay;
     }
 
     @Override
@@ -104,10 +157,9 @@ public class MapFragment extends Fragment {
         edit.putString(PREFS_TILE_SOURCE, mMapView.getTileProvider().getTileSource().name());
         edit.putInt(PREFS_SCROLL_X, mMapView.getScrollX());
         edit.putInt(PREFS_SCROLL_Y, mMapView.getScrollY());
-        edit.putInt(PREFS_ZOOM_LEVEL, mMapView.getZoomLevel());
         edit.commit();
 
-        mLocationOverlay.disableMyLocation();
+        mMyLocationOverlay.disableMyLocation();
         mCompassOverlay.disableCompass();
 
         super.onPause();
@@ -116,11 +168,7 @@ public class MapFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        final String tileSourceName = mPrefs.getString(PREFS_TILE_SOURCE, TileSourceFactory.DEFAULT_TILE_SOURCE.name());
-        try {
-            mMapView.setTileSource(TileSourceFactory.getTileSource(tileSourceName));
-        } catch (IllegalArgumentException ex) {
-            log.error("onResume() error", ex);
-        }
+        mMapView.setTileSource(TileSourceFactory.MAPNIK);
     }
+
 }
